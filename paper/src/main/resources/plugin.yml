@@ -1,0 +1,17 @@
+name: NordControl
+version: '0.1.0'
+main: dev.nordcontrol.paper.PaperNordControlPlugin
+api-version: '1.21'
+folia-supported: true
+description: Secure MCP control and monitoring bridge for Paper and Folia
+author: NetGraniz
+website: https://github.com/NetGraniz/NordControl
+commands:
+  nordcontrol:
+    description: Show status or reload NordControl configuration
+    usage: /nordcontrol <status|reload>
+    permission: nordcontrol.admin
+permissions:
+  nordcontrol.admin:
+    description: Administer NordControl
+    default: op
