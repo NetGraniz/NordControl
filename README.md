@@ -22,8 +22,15 @@ http://127.0.0.1:8766/mcp  # Velocity
 Send the generated token only in the `Authorization: Bearer <token>` header. For a remote agent, keep `bindAddress` on `127.0.0.1` and use an SSH tunnel:
 
 ```bash
-ssh -L 8765:127.0.0.1:8765 user@minecraft-host
+ssh -N \
+  -L 18765:127.0.0.1:8765 \
+  -L 18766:127.0.0.1:8766 \
+  user@minecraft-host
 ```
+
+The agent then connects to `http://127.0.0.1:18765/mcp` for Paper/Folia or `http://127.0.0.1:18766/mcp` for Velocity. The Minecraft host sees the tunneled connection as loopback, so you do not need to add the agent computer's LAN or public IP to `allowedAddresses`.
+
+See [CONNECTING.md](CONNECTING.md) for the complete architecture, Windows and Linux/macOS commands, MCP client configuration, verification, and troubleshooting.
 
 ## Tools
 
@@ -60,6 +67,6 @@ Token, IP allowlist, timeout, and log limit update live. Changing `bindAddress`,
 
 Every tool call, command, and rejected authorization attempt is appended to `plugins/NordControl/audit.jsonl`. It rotates to `audit.previous.jsonl` at 10 MiB. Tokens are never logged. Log-reading tools can only access `logs/latest.log` and redact IPv4 addresses.
 
-See [SECURITY.md](SECURITY.md) before exposing the service beyond loopback and [BUILDING.md](BUILDING.md) to build from source.
+See [SECURITY.md](SECURITY.md) before exposing the service beyond loopback, [CONNECTING.md](CONNECTING.md) to connect an agent, and [BUILDING.md](BUILDING.md) to build from source.
 
 Licensed under MIT.
