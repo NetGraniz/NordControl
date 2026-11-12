@@ -13,4 +13,6 @@ The recommended remote-access path is an SSH local-forwarding tunnel while NordC
 
 The API has no operating-system command tool, no arbitrary file-path parameter, no reflection/evaluation tool, and no endpoint that returns the bearer token. Minecraft commands can still be destructive and other plugins may expose powerful commands, so audit and scope agent credentials accordingly.
 
+NordControl UI reads the token directly from the selected local plugin configuration each time it connects. It stores only configuration file paths under `%LOCALAPPDATA%\NordControlUi`; it does not display or persist a token. Run the UI only under a trusted Windows account that already has permission to read the relevant plugin directory. The UI refuses non-loopback `bindAddress` values so it cannot silently send an administrator token across the network.
+
 Please report vulnerabilities privately to the repository owner instead of opening a public exploit report.

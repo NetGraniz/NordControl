@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 
-@Plugin(id = "nordcontrol", name = "NordControl", version = "0.1.0", description = "Secure MCP control and monitoring bridge for Velocity", authors = {"NetGraniz"}, url = "https://github.com/NetGraniz/NordControl")
+@Plugin(id = "nordcontrol", name = "NordControl", version = "0.2.0", description = "Secure MCP control and monitoring bridge for Velocity", authors = {"NetGraniz"}, url = "https://github.com/NetGraniz/NordControl")
 public final class VelocityNordControlPlugin implements ControlPlatform {
     private final ProxyServer proxy;
     private final Logger logger;

@@ -8,6 +8,7 @@ It does **not** expose a shell, process execution, arbitrary Java evaluation, or
 
 - `NordControl-Paper-<version>.jar` — Paper and Folia
 - `NordControl-Velocity-<version>.jar` — Velocity
+- `NordControlUi-<version>-win-x64.exe` — local Windows console-command client
 - Java 21 or newer
 
 Put the appropriate JAR in the platform's `plugins` directory and start it once. Each platform creates its own `plugins/NordControl/config.json` with a random 256-bit bearer token.
@@ -68,5 +69,20 @@ Token, IP allowlist, timeout, and log limit update live. Changing `bindAddress`,
 Every tool call, command, and rejected authorization attempt is appended to `plugins/NordControl/audit.jsonl`. It rotates to `audit.previous.jsonl` at 10 MiB. Tokens are never logged. Log-reading tools can only access `logs/latest.log` and redact IPv4 addresses.
 
 See [SECURITY.md](SECURITY.md) before exposing the service beyond loopback, [CONNECTING.md](CONNECTING.md) to connect an agent, and [BUILDING.md](BUILDING.md) to build from source.
+
+## NordControl UI
+
+`NordControlUi` is an optional self-contained Windows application for running Minecraft console commands without opening a server terminal. It supports Folia/Paper and Velocity, asks for confirmation before dispatching a command, displays the MCP response and recent logs, and uses the same NordControl audit trail as other clients.
+
+By default it reads these local server files:
+
+```text
+F:\Minecraft Main\plugins\NordControl\config.json
+F:\Minecraft Proxy\plugins\nordcontrol\config.json
+```
+
+Use **Settings** to change the paths. Only those paths are stored in `%LOCALAPPDATA%\NordControlUi\settings.json`; bearer tokens stay in the plugin configuration files and are neither displayed nor copied into the UI settings.
+
+Run the application on the Minecraft host. NordControl UI deliberately connects only to loopback addresses. For use from another computer, keep NordControl bound to loopback and create an SSH tunnel first; do not expose the MCP port directly to the internet.
 
 Licensed under MIT.
