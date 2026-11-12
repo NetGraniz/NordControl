@@ -1,6 +1,6 @@
 # Building
 
-Requirements: JDK 21+, Apache Maven 3.9+, and .NET SDK 8+ for the optional Windows UI.
+Requirements: JDK 25, Apache Maven 3.9+, and .NET SDK 8+ for the optional Windows UI. The current Paper API dependency is compiled for Java 25 even though NordControl's own bytecode target remains Java 21.
 
 ```bash
 mvn clean verify

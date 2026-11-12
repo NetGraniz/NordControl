@@ -4,6 +4,15 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to rebuild
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
 
 permissions:
   contents: write
@@ -19,7 +28,7 @@ jobs:
         uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "25"
           cache: maven
 
       - name: Set up .NET
@@ -36,7 +45,7 @@ jobs:
       - name: Publish release files
         shell: pwsh
         run: |
-          $version = "${{ github.ref_name }}".TrimStart("v")
+          $version = $env:RELEASE_TAG.TrimStart("v")
           New-Item -ItemType Directory -Path artifacts -Force | Out-Null
           dotnet publish ui/NordControlUi/NordControlUi.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false -o artifacts/ui
           Copy-Item "paper/target/NordControl-Paper-$version.jar" "artifacts/NordControl-Paper-$version.jar"
@@ -53,11 +62,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $files = Get-ChildItem artifacts -File | Select-Object -ExpandProperty FullName
-          gh release view "${{ github.ref_name }}" 2>$null
+          gh release view $env:RELEASE_TAG 2>$null
           if ($LASTEXITCODE -eq 0) {
-            gh release upload "${{ github.ref_name }}" $files --clobber
+            gh release upload $env:RELEASE_TAG $files --clobber
           } else {
-            gh release create "${{ github.ref_name }}" $files `
-              --title "NordControl ${{ github.ref_name }}" `
+            gh release create $env:RELEASE_TAG $files `
+              --title "NordControl $env:RELEASE_TAG" `
               --generate-notes
           }
