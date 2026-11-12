@@ -188,7 +188,7 @@ public final class NordControlServer implements AutoCloseable {
         result.add("capabilities", capabilities);
         JsonObject info = new JsonObject();
         info.addProperty("name", "NordControl");
-        info.addProperty("version", "0.2.0");
+        info.addProperty("version", "0.2.1");
         result.add("serverInfo", info);
         result.addProperty("instructions", "Controls Minecraft only. Console commands run with full Minecraft console privileges and are written to the audit log.");
         return rpcResult(id, result);

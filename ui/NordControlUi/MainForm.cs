@@ -28,6 +28,8 @@ internal sealed class MainForm : Form
         StartPosition = FormStartPosition.CenterScreen;
         ClientSize = new Size(900, 620);
         MinimumSize = new Size(720, 520);
+        AutoScaleDimensions = new SizeF(96F, 96F);
+        AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = Cream;
         ForeColor = Forest;
         Font = new Font("Segoe UI", 10F);
@@ -44,7 +46,14 @@ internal sealed class MainForm : Form
     protected override void OnShown(EventArgs e)
     {
         base.OnShown(e);
-        _ = RefreshStatusAsync();
+        if (settings.IsComplete)
+        {
+            _ = RefreshStatusAsync();
+            return;
+        }
+
+        SetStatus("Setup required", Gold);
+        BeginInvoke(OpenSettings);
     }
 
     protected override void Dispose(bool disposing)
@@ -67,7 +76,7 @@ internal sealed class MainForm : Form
         };
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 76));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 88));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 110));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
@@ -126,7 +135,7 @@ internal sealed class MainForm : Form
         commandLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         commandLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
         commandLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
-        commandLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        commandLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
         commandLayout.Controls.Add(new Label { Text = "Console command", Dock = DockStyle.Fill, Font = new Font("Segoe UI Semibold", 10F) }, 0, 0);
         commandLayout.SetColumnSpan(commandLayout.GetControlFromPosition(0, 0)!, 2);
         commandInput.PlaceholderText = "Example: list";
@@ -135,6 +144,7 @@ internal sealed class MainForm : Form
         commandInput.Margin = new Padding(0, 2, 12, 0);
         commandLayout.Controls.Add(commandInput, 0, 1);
         executeButton.Dock = DockStyle.Fill;
+        executeButton.Margin = new Padding(0, 2, 0, 0);
         commandLayout.Controls.Add(executeButton, 1, 1);
         commandCard.Controls.Add(commandLayout);
         root.Controls.Add(commandCard, 0, 2);
@@ -185,6 +195,12 @@ internal sealed class MainForm : Form
 
     private async Task RefreshStatusAsync()
     {
+        if (!settings.IsComplete)
+        {
+            SetStatus("Setup required", Gold);
+            return;
+        }
+
         SetBusy(true);
         SetStatus("Checking...", Gold);
         try
@@ -283,6 +299,11 @@ internal sealed class MainForm : Form
 
     private ConnectionProfile LoadSelectedProfile()
     {
+        if (!settings.IsComplete)
+        {
+            throw new InvalidOperationException("Select both NordControl config.json files in Settings first.");
+        }
+
         var isVelocity = serverSelector.SelectedIndex == 1;
         return ConnectionProfileLoader.Load(
             isVelocity ? "Velocity" : "Folia / Paper",

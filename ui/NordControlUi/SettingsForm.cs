@@ -16,6 +16,8 @@ internal sealed class SettingsForm : Form
         MinimumSize = new Size(600, 260);
         MaximizeBox = false;
         MinimizeBox = false;
+        AutoScaleDimensions = new SizeF(96F, 96F);
+        AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = Color.FromArgb(246, 244, 234);
         Font = new Font("Segoe UI", 9.5F);
 
@@ -36,7 +38,7 @@ internal sealed class SettingsForm : Form
 
         var note = new Label
         {
-            Text = "Only configuration paths are saved. Bearer tokens remain in the plugin files.",
+            Text = "Select both NordControl config.json files. Only these paths are saved; bearer tokens remain in the plugin files.",
             Dock = DockStyle.Fill,
             ForeColor = Color.FromArgb(77, 91, 82),
             AutoEllipsis = true
@@ -71,6 +73,7 @@ internal sealed class SettingsForm : Form
     {
         layout.Controls.Add(new Label { Text = label, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft }, 0, row);
         textBox.Text = value;
+        textBox.PlaceholderText = "Select config.json";
         textBox.Dock = DockStyle.Fill;
         layout.Controls.Add(textBox, 1, row);
         var browse = CreateButton("Browse...", false);

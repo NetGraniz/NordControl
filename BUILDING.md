@@ -8,8 +8,8 @@ mvn clean verify
 
 Executable artifacts:
 
-- `paper/target/NordControl-Paper-0.2.0.jar`
-- `velocity/target/NordControl-Velocity-0.2.0.jar`
+- `paper/target/NordControl-Paper-0.2.1.jar`
+- `velocity/target/NordControl-Velocity-0.2.1.jar`
 
 The build compiles the shared server once, shades it and Gson into each platform artifact, and leaves the Paper/Velocity APIs provided by the host.
 

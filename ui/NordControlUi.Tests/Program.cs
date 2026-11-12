@@ -1,4 +1,6 @@
 using NordControlUi;
+using System.Reflection;
+using System.Windows.Forms;
 
 var failures = new List<string>();
 
@@ -21,6 +23,13 @@ Check("parses a tool result", () =>
 });
 Check("parses an RPC error", () =>
     Throws<InvalidOperationException>(() => NordControlClient.ParseToolResponse("""{"jsonrpc":"2.0","id":"1","error":{"code":-32600,"message":"bad"}}""")));
+Check("ships without server-specific paths", () =>
+{
+    Equal(string.Empty, AppSettings.Defaults.FoliaConfigPath);
+    Equal(string.Empty, AppSettings.Defaults.VelocityConfigPath);
+    Equal(false, AppSettings.Defaults.IsComplete);
+});
+Check("keeps Execute visible at 150 percent scaling", VerifyExecuteButtonLayout);
 
 if (failures.Count > 0)
 {
@@ -28,7 +37,7 @@ if (failures.Count > 0)
     return 1;
 }
 
-    Console.WriteLine("NordControlUi tests passed (7/7).");
+Console.WriteLine("NordControlUi tests passed (9/9).");
 return 0;
 
 void Check(string name, Action test)
@@ -67,3 +76,73 @@ static void Throws<TException>(Action action) where TException : Exception
 
 static string Config(string bindAddress, int port) =>
     $$"""{"enabled":true,"bindAddress":"{{bindAddress}}","port":{{port}},"token":"12345678901234567890123456789012"}""";
+
+static void VerifyExecuteButtonLayout()
+{
+    Exception? failure = null;
+    var thread = new Thread(() =>
+    {
+        try
+        {
+            var formType = typeof(CommandValidator).Assembly.GetType("NordControlUi.MainForm", true)!;
+            using var form = (Form)Activator.CreateInstance(
+                formType,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                null,
+                null,
+                null)!;
+            form.CreateControl();
+            form.Scale(new SizeF(1.5F, 1.5F));
+            PerformLayout(form);
+            var execute = FindButton(form, "Execute") ?? throw new InvalidOperationException("Execute button was not found.");
+            if (execute.Width < 100 || execute.Height < 36)
+            {
+                throw new InvalidOperationException($"Execute button is clipped: {execute.Bounds}.");
+            }
+
+            if (execute.Parent is null || !execute.Parent.ClientRectangle.Contains(execute.Bounds))
+            {
+                throw new InvalidOperationException($"Execute button {execute.Bounds} extends outside its parent {execute.Parent?.ClientRectangle}.");
+            }
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+        }
+    });
+    thread.SetApartmentState(ApartmentState.STA);
+    thread.Start();
+    thread.Join();
+    if (failure is not null)
+    {
+        throw failure;
+    }
+}
+
+static void PerformLayout(Control control)
+{
+    control.PerformLayout();
+    foreach (Control child in control.Controls)
+    {
+        PerformLayout(child);
+    }
+}
+
+static Button? FindButton(Control control, string text)
+{
+    foreach (Control child in control.Controls)
+    {
+        if (child is Button button && button.Text == text)
+        {
+            return button;
+        }
+
+        var nested = FindButton(child, text);
+        if (nested is not null)
+        {
+            return nested;
+        }
+    }
+
+    return null;
+}

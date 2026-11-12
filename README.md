@@ -74,14 +74,7 @@ See [SECURITY.md](SECURITY.md) before exposing the service beyond loopback, [CON
 
 `NordControlUi` is an optional self-contained Windows application for running Minecraft console commands without opening a server terminal. It supports Folia/Paper and Velocity, asks for confirmation before dispatching a command, displays the MCP response and recent logs, and uses the same NordControl audit trail as other clients.
 
-By default it reads these local server files:
-
-```text
-F:\Minecraft Main\plugins\NordControl\config.json
-F:\Minecraft Proxy\plugins\nordcontrol\config.json
-```
-
-Use **Settings** to change the paths. Only those paths are stored in `%LOCALAPPDATA%\NordControlUi\settings.json`; bearer tokens stay in the plugin configuration files and are neither displayed nor copied into the UI settings.
+On first launch, use **Settings** to select the Folia/Paper and Velocity `config.json` files. NordControl UI ships without server-specific paths. Only the paths you select are stored in `%LOCALAPPDATA%\NordControlUi\settings.json`; bearer tokens stay in the plugin configuration files and are neither displayed nor copied into the UI settings.
 
 Run the application on the Minecraft host. NordControl UI deliberately connects only to loopback addresses. For use from another computer, keep NordControl bound to loopback and create an SSH tunnel first; do not expose the MCP port directly to the internet.
 

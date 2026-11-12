@@ -4,9 +4,11 @@ namespace NordControlUi;
 
 public sealed record AppSettings(string FoliaConfigPath, string VelocityConfigPath)
 {
-    public static AppSettings Defaults { get; } = new(
-        @"F:\Minecraft Main\plugins\NordControl\config.json",
-        @"F:\Minecraft Proxy\plugins\nordcontrol\config.json");
+    public static AppSettings Defaults { get; } = new(string.Empty, string.Empty);
+
+    public bool IsComplete =>
+        !string.IsNullOrWhiteSpace(FoliaConfigPath) &&
+        !string.IsNullOrWhiteSpace(VelocityConfigPath);
 }
 
 public static class SettingsStore
