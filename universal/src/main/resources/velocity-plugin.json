@@ -1,0 +1,1 @@
+{"id":"nordcontrol","name":"NordControl","version":"${project.version}","description":"Secure universal MCP control bridge for Paper, Folia, and Velocity","authors":["NetGraniz"],"main":"dev.nordcontrol.velocity.VelocityNordControlPlugin"}

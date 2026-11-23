@@ -6,12 +6,11 @@ Requirements: JDK 25, Apache Maven 3.9+, and .NET SDK 8+ for the optional Window
 mvn clean verify
 ```
 
-Executable artifacts:
+Release artifact:
 
-- `paper/target/NordControl-Paper-0.2.1.jar`
-- `velocity/target/NordControl-Velocity-0.2.1.jar`
+- `universal/target/NordControl-0.3.0.jar`
 
-The build compiles the shared server once, shades it and Gson into each platform artifact, and leaves the Paper/Velocity APIs provided by the host.
+The build compiles both platform adapters and packages them, the shared server, and Gson into one universal JAR. Paper and Velocity APIs remain provided by the host.
 
 Run the UI checks and publish a self-contained Windows executable:
 

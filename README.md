@@ -6,12 +6,11 @@ It does **not** expose a shell, process execution, arbitrary Java evaluation, or
 
 ## Platforms
 
-- `NordControl-Paper-<version>.jar` — Paper and Folia
-- `NordControl-Velocity-<version>.jar` — Velocity
+- `NordControl-<version>.jar` — the same universal JAR for Paper, Folia, and Velocity
 - `NordControlUi-<version>-win-x64.exe` — local Windows console-command client
 - Java 21 or newer
 
-Put the appropriate JAR in the platform's `plugins` directory and start it once. Each platform creates its own `plugins/NordControl/config.json` with a random 256-bit bearer token.
+Put the universal JAR in each platform's `plugins` directory and start it once. Each platform keeps its own `plugins/NordControl/config.json`, including its own port and random 256-bit bearer token.
 
 ## MCP endpoint
 
