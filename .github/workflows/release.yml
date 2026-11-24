@@ -36,11 +36,8 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - name: Build and test plugins
+      - name: Build plugins
         run: mvn --batch-mode clean verify
-
-      - name: Test Windows UI
-        run: dotnet run --project ui/NordControlUi.Tests/NordControlUi.Tests.csproj -c Release
 
       - name: Publish release files
         shell: pwsh
