@@ -77,4 +77,6 @@ On first launch, use **Settings** to select the Folia/Paper and Velocity `config
 
 Run the application on the Minecraft host. NordControl UI deliberately connects only to loopback addresses. For use from another computer, keep NordControl bound to loopback and create an SSH tunnel first; do not expose the MCP port directly to the internet.
 
-Licensed under MIT.
+## License
+
+Current development on `main` is licensed under [GNU GPL v3.0 only](LICENSE). The latest published release remains available under the MIT License stated on its release page.
