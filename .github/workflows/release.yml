@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to rebuild
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build and test plugins
+        run: mvn --batch-mode clean verify
+
+      - name: Test Windows UI
+        run: dotnet run --project ui/NordControlUi.Tests/NordControlUi.Tests.csproj -c Release
+
+      - name: Publish release files
+        shell: pwsh
+        run: |
+          $version = $env:RELEASE_TAG.TrimStart("v")
+          New-Item -ItemType Directory -Path artifacts -Force | Out-Null
+          dotnet publish ui/NordControlUi/NordControlUi.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false -o artifacts/ui
+          Copy-Item "universal/target/NordControl-$version.jar" "artifacts/NordControl-$version.jar"
+          Copy-Item "artifacts/ui/NordControlUi.exe" "artifacts/NordControlUi-$version-win-x64.exe"
+          Get-ChildItem artifacts -File | Sort-Object Name | ForEach-Object {
+            $hash = (Get-FileHash -Algorithm SHA256 $_.FullName).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          } | Set-Content -Encoding ascii artifacts/SHA256SUMS.txt
+
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $files = Get-ChildItem artifacts -File | Select-Object -ExpandProperty FullName
+          gh release view $env:RELEASE_TAG 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:RELEASE_TAG $files --clobber
+          } else {
+            gh release create $env:RELEASE_TAG $files `
+              --title "NordControl $env:RELEASE_TAG" `
+              --generate-notes
+          }
