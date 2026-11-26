@@ -8,7 +8,7 @@ mvn clean verify
 
 Release artifact:
 
-- `universal/target/NordControl-0.3.0.jar`
+- `universal/target/NordControl-0.3.1.jar`
 
 The build compiles both platform adapters and packages them, the shared server, and Gson into one universal JAR. Paper and Velocity APIs remain provided by the host.
 

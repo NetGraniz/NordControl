@@ -19,7 +19,9 @@ final class AuditLog {
 
     synchronized void record(String remote, String action, String detail, boolean success) {
         try {
-            Files.createDirectories(file.getParent());
+            Path parent = file.toAbsolutePath().normalize().getParent();
+            if (parent == null) return;
+            Files.createDirectories(parent);
             if (Files.exists(file) && Files.size(file) >= MAX_SIZE) {
                 Files.move(file, file.resolveSibling("audit.previous.jsonl"), StandardCopyOption.REPLACE_EXISTING);
             }

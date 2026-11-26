@@ -22,10 +22,17 @@ public record ControlConfig(
         int commandTimeoutSeconds,
         int maxLogLines) {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    public ControlConfig {
+        allowedAddresses = allowedAddresses == null ? null : List.copyOf(allowedAddresses);
+    }
 
     public static ControlConfig loadOrCreate(Path file, int defaultPort) throws IOException {
         if (!Files.exists(file)) {
-            Files.createDirectories(file.getParent());
+            Path parent = file.toAbsolutePath().normalize().getParent();
+            if (parent == null) throw new IOException("config.json must have a parent directory");
+            Files.createDirectories(parent);
             var config = defaults(defaultPort);
             writeAtomic(file, config);
             return config;
@@ -33,16 +40,15 @@ public record ControlConfig(
         try {
             var config = GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), ControlConfig.class);
             validate(config);
-            return new ControlConfig(config.enabled, config.bindAddress, config.port, config.token,
-                    List.copyOf(config.allowedAddresses), config.commandTimeoutSeconds, config.maxLogLines);
-        } catch (JsonParseException | NullPointerException exception) {
+            return config;
+        } catch (JsonParseException exception) {
             throw new IOException("Invalid config.json: " + exception.getMessage(), exception);
         }
     }
 
     public static ControlConfig defaults(int port) {
         byte[] bytes = new byte[32];
-        new SecureRandom().nextBytes(bytes);
+        SECURE_RANDOM.nextBytes(bytes);
         return new ControlConfig(true, "127.0.0.1", port,
                 Base64.getUrlEncoder().withoutPadding().encodeToString(bytes),
                 List.of("127.0.0.1", "::1", "0:0:0:0:0:0:0:1"), 15, 500);
