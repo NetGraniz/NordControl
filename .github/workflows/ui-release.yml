@@ -1,0 +1,66 @@
+name: NordControlUi release
+
+on:
+  push:
+    tags:
+      - "ui-v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing NordControlUi release tag to rebuild
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release-ui:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build UI
+        shell: pwsh
+        run: |
+          dotnet restore ui/NordControlUi/NordControlUi.csproj
+          dotnet build ui/NordControlUi/NordControlUi.csproj -c Release --no-restore
+
+      - name: Publish UI release files
+        shell: pwsh
+        run: |
+          $version = $env:RELEASE_TAG -replace '^ui-v', ''
+          New-Item -ItemType Directory -Path artifacts -Force | Out-Null
+          dotnet publish ui/NordControlUi/NordControlUi.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false -o artifacts/ui
+          Copy-Item "artifacts/ui/NordControlUi.exe" "artifacts/NordControlUi-$version-win-x64.exe"
+          $file = Get-Item "artifacts/NordControlUi-$version-win-x64.exe"
+          $hash = (Get-FileHash -Algorithm SHA256 $file.FullName).Hash.ToLowerInvariant()
+          "$hash  $($file.Name)" | Set-Content -Encoding ascii artifacts/SHA256SUMS.txt
+
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = $env:RELEASE_TAG -replace '^ui-v', ''
+          $files = @(
+            "artifacts/NordControlUi-$version-win-x64.exe",
+            "artifacts/SHA256SUMS.txt"
+          )
+          gh release view $env:RELEASE_TAG 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:RELEASE_TAG $files --clobber
+          } else {
+            gh release create $env:RELEASE_TAG $files `
+              --title "NordControlUi $version" `
+              --generate-notes
+          }

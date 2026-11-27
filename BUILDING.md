@@ -19,3 +19,5 @@ dotnet publish ui/NordControlUi/NordControlUi.csproj -c Release -r win-x64 --sel
 ```
 
 The published `artifacts/ui/NordControlUi.exe` does not require a separately installed .NET runtime.
+
+NordControlUi releases use independent `ui-v*` tags, such as `ui-v0.3.0`. Plugin releases use `v*` tags and do not include the Windows application.

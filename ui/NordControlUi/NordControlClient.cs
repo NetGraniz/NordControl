@@ -6,7 +6,9 @@ namespace NordControlUi;
 
 public sealed record ToolCallResult(bool IsError, JsonElement StructuredContent)
 {
-    public string Format() => JsonSerializer.Serialize(StructuredContent, new JsonSerializerOptions { WriteIndented = true });
+    private static readonly JsonSerializerOptions DisplayJsonOptions = new() { WriteIndented = true };
+
+    public string Format() => JsonSerializer.Serialize(StructuredContent, DisplayJsonOptions);
 }
 
 public sealed class NordControlClient : IDisposable

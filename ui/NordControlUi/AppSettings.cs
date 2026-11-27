@@ -2,13 +2,20 @@ using System.Text.Json;
 
 namespace NordControlUi;
 
-public sealed record AppSettings(string FoliaConfigPath, string VelocityConfigPath)
+public sealed record LogHighlightRule(string ContainsText, string ColorName);
+
+public sealed record AppSettings(
+    string FoliaConfigPath,
+    string VelocityConfigPath,
+    IReadOnlyList<LogHighlightRule>? HighlightRules = null)
 {
-    public static AppSettings Defaults { get; } = new(string.Empty, string.Empty);
+    public static AppSettings Defaults { get; } = new(string.Empty, string.Empty, []);
 
     public bool IsComplete =>
         !string.IsNullOrWhiteSpace(FoliaConfigPath) &&
         !string.IsNullOrWhiteSpace(VelocityConfigPath);
+
+    public IReadOnlyList<LogHighlightRule> EffectiveHighlightRules => HighlightRules ?? [];
 }
 
 public static class SettingsStore
