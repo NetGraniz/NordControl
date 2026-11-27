@@ -7,15 +7,23 @@ public sealed record LogHighlightRule(string ContainsText, string ColorName);
 public sealed record AppSettings(
     string FoliaConfigPath,
     string VelocityConfigPath,
-    IReadOnlyList<LogHighlightRule>? HighlightRules = null)
+    IReadOnlyList<LogHighlightRule>? HighlightRules = null,
+    bool AutoRefreshLogs = false,
+    int AutoRefreshMinutes = 5)
 {
-    public static AppSettings Defaults { get; } = new(string.Empty, string.Empty, []);
+    public static AppSettings Defaults { get; } = new(string.Empty, string.Empty, [], false, 5);
 
     public bool IsComplete =>
         !string.IsNullOrWhiteSpace(FoliaConfigPath) &&
         !string.IsNullOrWhiteSpace(VelocityConfigPath);
 
     public IReadOnlyList<LogHighlightRule> EffectiveHighlightRules => HighlightRules ?? [];
+
+    public AppSettings Normalize() => this with
+    {
+        HighlightRules = EffectiveHighlightRules,
+        AutoRefreshMinutes = AutoRefreshMinutes is >= 1 and <= 10_080 ? AutoRefreshMinutes : 5
+    };
 }
 
 public static class SettingsStore
@@ -36,8 +44,8 @@ public static class SettingsStore
 
         try
         {
-            return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(SettingsPath), JsonOptions)
-                   ?? AppSettings.Defaults;
+            return (JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(SettingsPath), JsonOptions)
+                    ?? AppSettings.Defaults).Normalize();
         }
         catch (Exception)
         {

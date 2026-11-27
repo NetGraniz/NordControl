@@ -8,6 +8,8 @@ internal sealed class SettingsForm : Form
 
     private readonly TextBox foliaPath = new();
     private readonly TextBox velocityPath = new();
+    private readonly CheckBox autoRefresh = new();
+    private readonly NumericUpDown autoRefreshMinutes = new();
     private readonly DataGridView highlightRules = new();
 
     public AppSettings Settings { get; private set; }
@@ -17,8 +19,8 @@ internal sealed class SettingsForm : Form
         Settings = settings;
         Text = "NordControl UI settings";
         StartPosition = FormStartPosition.CenterParent;
-        ClientSize = new Size(760, 520);
-        MinimumSize = new Size(680, 460);
+        ClientSize = new Size(760, 570);
+        MinimumSize = new Size(680, 510);
         MaximizeBox = false;
         MinimizeBox = false;
         AutoScaleDimensions = new SizeF(96F, 96F);
@@ -37,7 +39,7 @@ internal sealed class SettingsForm : Form
             Dock = DockStyle.Fill,
             Padding = new Padding(20),
             ColumnCount = 3,
-            RowCount = 7
+            RowCount = 8
         };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -45,6 +47,7 @@ internal sealed class SettingsForm : Form
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
@@ -62,6 +65,8 @@ internal sealed class SettingsForm : Form
 
         AddPathRow(layout, 1, "Folia / Paper", foliaPath, settings.FoliaConfigPath);
         AddPathRow(layout, 2, "Velocity", velocityPath, settings.VelocityConfigPath);
+        layout.Controls.Add(BuildAutoRefreshRow(settings), 0, 3);
+        layout.SetColumnSpan(layout.GetControlFromPosition(0, 3)!, 3);
 
         var highlightHeading = new TableLayoutPanel
         {
@@ -82,7 +87,7 @@ internal sealed class SettingsForm : Form
         var addRule = CreateButton("Add rule", false);
         addRule.Click += (_, _) => AddHighlightRule(string.Empty, "White");
         highlightHeading.Controls.Add(addRule, 1, 0);
-        layout.Controls.Add(highlightHeading, 0, 3);
+        layout.Controls.Add(highlightHeading, 0, 4);
         layout.SetColumnSpan(highlightHeading, 3);
 
         ConfigureHighlightsTable();
@@ -91,7 +96,7 @@ internal sealed class SettingsForm : Form
             AddHighlightRule(rule.ContainsText, rule.ColorName);
         }
 
-        layout.Controls.Add(highlightRules, 0, 4);
+        layout.Controls.Add(highlightRules, 0, 5);
         layout.SetColumnSpan(highlightRules, 3);
         var hint = new Label
         {
@@ -100,7 +105,7 @@ internal sealed class SettingsForm : Form
             ForeColor = Color.FromArgb(91, 105, 96),
             Font = new Font("Segoe UI", 8.5F)
         };
-        layout.Controls.Add(hint, 0, 5);
+        layout.Controls.Add(hint, 0, 6);
         layout.SetColumnSpan(hint, 3);
 
         var buttons = new FlowLayoutPanel
@@ -116,12 +121,45 @@ internal sealed class SettingsForm : Form
         cancel.DialogResult = DialogResult.Cancel;
         buttons.Controls.Add(save);
         buttons.Controls.Add(cancel);
-        layout.Controls.Add(buttons, 0, 6);
+        layout.Controls.Add(buttons, 0, 7);
         layout.SetColumnSpan(buttons, 3);
 
         AcceptButton = save;
         CancelButton = cancel;
         return layout;
+    }
+
+    private FlowLayoutPanel BuildAutoRefreshRow(AppSettings settings)
+    {
+        var row = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Padding = new Padding(0, 10, 0, 0)
+        };
+        autoRefresh.Text = "Automatically refresh logs every";
+        autoRefresh.AutoSize = true;
+        autoRefresh.Checked = settings.AutoRefreshLogs;
+        autoRefresh.Margin = new Padding(0, 5, 8, 0);
+
+        autoRefreshMinutes.Minimum = 1;
+        autoRefreshMinutes.Maximum = 10_080;
+        autoRefreshMinutes.Value = Math.Clamp(settings.AutoRefreshMinutes, 1, 10_080);
+        autoRefreshMinutes.Width = 86;
+        autoRefreshMinutes.Enabled = autoRefresh.Checked;
+        autoRefreshMinutes.Margin = new Padding(0, 1, 6, 0);
+        autoRefresh.CheckedChanged += (_, _) => autoRefreshMinutes.Enabled = autoRefresh.Checked;
+
+        row.Controls.Add(autoRefresh);
+        row.Controls.Add(autoRefreshMinutes);
+        row.Controls.Add(new Label
+        {
+            Text = "minutes",
+            AutoSize = true,
+            Margin = new Padding(0, 5, 0, 0)
+        });
+        return row;
     }
 
     private void ConfigureHighlightsTable()
@@ -275,7 +313,12 @@ internal sealed class SettingsForm : Form
             rules.Add(new LogHighlightRule(text, colorName));
         }
 
-        Settings = new AppSettings(foliaPath.Text.Trim(), velocityPath.Text.Trim(), rules);
+        Settings = new AppSettings(
+            foliaPath.Text.Trim(),
+            velocityPath.Text.Trim(),
+            rules,
+            autoRefresh.Checked,
+            Decimal.ToInt32(autoRefreshMinutes.Value));
         DialogResult = DialogResult.OK;
         Close();
     }

@@ -17,13 +17,14 @@ internal sealed class MainForm : Form
     private readonly Button executeButton;
     private readonly Button logsButton;
     private readonly Button settingsButton;
-    private readonly Button clearButton;
     private readonly Label statusLabel = new();
     private readonly Panel statusDot = new();
     private readonly RichTextBox output = new();
     private readonly NordControlClient client = new();
+    private readonly System.Windows.Forms.Timer autoRefreshTimer = new();
     private AppSettings settings;
     private TargetServer selectedServer = TargetServer.Folia;
+    private bool operationInProgress;
 
     public MainForm()
     {
@@ -43,7 +44,6 @@ internal sealed class MainForm : Form
         executeButton = CreateButton("Execute", true);
         logsButton = CreateDarkButton("Refresh logs");
         settingsButton = CreateButton("Settings", false);
-        clearButton = CreateDarkButton("Clear");
 
         BuildLayout();
         WireEvents();
@@ -56,6 +56,7 @@ internal sealed class MainForm : Form
         if (settings.IsComplete)
         {
             _ = RefreshStatusAsync();
+            ConfigureAutoRefresh();
             return;
         }
 
@@ -67,6 +68,7 @@ internal sealed class MainForm : Form
     {
         if (disposing)
         {
+            autoRefreshTimer.Dispose();
             client.Dispose();
         }
 
@@ -89,12 +91,21 @@ internal sealed class MainForm : Form
         Controls.Add(root);
     }
 
-    private TableLayoutPanel BuildControlsPanel()
+    private RoundedPanel BuildControlsPanel()
     {
+        var panel = new RoundedPanel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = Color.White,
+            CornerRadius = 18,
+            Margin = new Padding(0, 0, 7, 0),
+            Padding = new Padding(22, 18, 22, 16)
+        };
         var left = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            Margin = new Padding(0, 0, 18, 0),
+            BackColor = Color.White,
+            Margin = new Padding(0),
             ColumnCount = 1,
             RowCount = 6
         };
@@ -129,7 +140,8 @@ internal sealed class MainForm : Form
             Padding = new Padding(0, 0, 8, 8)
         }, 0, 5);
 
-        return left;
+        panel.Controls.Add(left);
+        return panel;
     }
 
     private static TableLayoutPanel BuildHeading()
@@ -250,7 +262,7 @@ internal sealed class MainForm : Form
             Dock = DockStyle.Fill,
             BackColor = LogBackground,
             CornerRadius = 18,
-            Margin = new Padding(0),
+            Margin = new Padding(7, 0, 0, 0),
             Padding = new Padding(18, 14, 18, 16)
         };
         var layout = new TableLayoutPanel
@@ -283,7 +295,6 @@ internal sealed class MainForm : Form
             Margin = new Padding(0, 3, 0, 0)
         };
         actions.Controls.Add(logsButton);
-        actions.Controls.Add(clearButton);
         layout.Controls.Add(actions, 1, 0);
 
         output.ReadOnly = true;
@@ -293,7 +304,8 @@ internal sealed class MainForm : Form
         output.Font = new Font("Cascadia Mono", 9.5F);
         output.Dock = DockStyle.Fill;
         output.DetectUrls = false;
-        output.WordWrap = false;
+        output.WordWrap = true;
+        output.ScrollBars = RichTextBoxScrollBars.Vertical;
         output.Margin = new Padding(0, 4, 0, 0);
         layout.Controls.Add(output, 0, 1);
         layout.SetColumnSpan(output, 2);
@@ -308,8 +320,14 @@ internal sealed class MainForm : Form
         velocityButton.Click += async (_, _) => await SelectServerAsync(TargetServer.Velocity);
         executeButton.Click += async (_, _) => await ExecuteCommandAsync();
         logsButton.Click += async (_, _) => await RefreshLogsAsync();
-        clearButton.Click += (_, _) => output.Clear();
         settingsButton.Click += (_, _) => OpenSettings();
+        autoRefreshTimer.Tick += async (_, _) =>
+        {
+            if (!operationInProgress && settings.IsComplete)
+            {
+                await RefreshLogsAsync();
+            }
+        };
         commandInput.KeyDown += async (_, e) =>
         {
             if (e.KeyCode == Keys.Enter && !e.Shift)
@@ -384,7 +402,7 @@ internal sealed class MainForm : Form
 
             commandInput.SelectAll();
             await Task.Delay(650);
-            await AppendLogsAsync(profile);
+            await ReplaceLogsAsync(profile);
             SetStatus("Connected", Success);
         }
         catch (Exception exception)
@@ -401,10 +419,11 @@ internal sealed class MainForm : Form
     private async Task RefreshLogsAsync()
     {
         SetBusy(true);
+        output.Clear();
         try
         {
             var profile = LoadSelectedProfile();
-            await AppendLogsAsync(profile);
+            await ReplaceLogsAsync(profile);
             SetStatus("Connected", Success);
         }
         catch (Exception exception)
@@ -418,9 +437,10 @@ internal sealed class MainForm : Form
         }
     }
 
-    private async Task AppendLogsAsync(ConnectionProfile profile)
+    private async Task ReplaceLogsAsync(ConnectionProfile profile)
     {
         var logs = await client.GetRecentLogsAsync(profile);
+        output.Clear();
         Append(logs.IsError ? "ERROR" : "RECENT LOGS", logs.Format());
     }
 
@@ -439,9 +459,11 @@ internal sealed class MainForm : Form
 
     private void OpenSettings()
     {
+        autoRefreshTimer.Stop();
         using var dialog = new SettingsForm(settings);
         if (dialog.ShowDialog(this) != DialogResult.OK)
         {
+            ConfigureAutoRefresh();
             return;
         }
 
@@ -450,22 +472,38 @@ internal sealed class MainForm : Form
             SettingsStore.Save(dialog.Settings);
             settings = dialog.Settings;
             ReapplyLogHighlights();
+            ConfigureAutoRefresh();
             _ = RefreshStatusAsync();
         }
         catch (Exception exception)
         {
+            ConfigureAutoRefresh();
             ShowError("Settings could not be saved: " + exception.Message);
         }
     }
 
     private void SetBusy(bool busy)
     {
+        operationInProgress = busy;
         executeButton.Enabled = !busy;
         logsButton.Enabled = !busy;
         settingsButton.Enabled = !busy;
         foliaButton.Enabled = !busy;
         velocityButton.Enabled = !busy;
         UseWaitCursor = busy;
+    }
+
+    private void ConfigureAutoRefresh()
+    {
+        autoRefreshTimer.Stop();
+        if (!settings.AutoRefreshLogs)
+        {
+            return;
+        }
+
+        var minutes = Math.Clamp(settings.AutoRefreshMinutes, 1, 10_080);
+        autoRefreshTimer.Interval = checked(minutes * 60_000);
+        autoRefreshTimer.Start();
     }
 
     private void SetStatus(string text, Color color)

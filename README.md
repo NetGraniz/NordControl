@@ -73,7 +73,7 @@ See [SECURITY.md](SECURITY.md) before exposing the service beyond loopback, [CON
 
 `NordControlUi` is an optional self-contained Windows application for running Minecraft console commands without opening a server terminal. It supports Folia/Paper and Velocity, dispatches commands directly to the selected target, displays recent logs, and uses the same NordControl audit trail as other clients.
 
-The UI keeps its controls on the left and a full-height log panel on the right. Log highlight rules can match text case-insensitively and color the complete matching line with one of 16 built-in colors.
+The UI keeps its controls in a full-height white panel on the left and a full-height dark log panel on the right. Logs wrap long lines and retain vertical scrolling without a horizontal scrollbar. Log highlight rules can match text case-insensitively and color the complete matching line with one of 16 built-in colors. Optional automatic log refresh accepts a custom interval in minutes and replaces the displayed snapshot instead of accumulating output.
 
 On first launch, use **Settings** to select the Folia/Paper and Velocity `config.json` files. NordControl UI ships without server-specific paths. Only the paths you select are stored in `%LOCALAPPDATA%\NordControlUi\settings.json`; bearer tokens stay in the plugin configuration files and are neither displayed nor copied into the UI settings.
 
